@@ -1,0 +1,23 @@
+version: '3'
+
+tasks:
+  dataservice_local:
+    cmds:
+      - docker run --name dynamodb-local -d -p 8000:8000 amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
+      - defer: docker stop dynamodb-local && docker rm dynamodb-local
+      - go run ./cmd/dataservice/main.go
+      - docker exec -it dynamodb-local sqlite3 /home/dynamodblocal/shared-local-instance.db
+    env:
+      DYNAMO_LOCAL: true
+
+  test:
+    cmds:
+      - task: test-db
+
+  test-db:
+    cmds:
+      - docker run --name dynamodb-local -d -p 8000:8000 amazon/dynamodb-local
+      - defer: docker stop dynamodb-local && docker rm dynamodb-local
+      - go test -v ./...
+    silent: false
+
