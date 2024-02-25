@@ -1,0 +1,28 @@
+package templates
+
+templ Index() {
+	<div>
+		<h1>ITCHGREP</h1>
+		<form
+			hx-post="/query/1"
+			hx-target="#asset-list"
+			hx-swap="innerHTML"
+			style="display: flex; align-items: center;"
+		>
+			<input
+				type="text"
+				name="query"
+				placeholder="bones..."
+				required
+				style="flex-grow: 1; margin-right: 8px; width: auto;"
+			/>
+			<button
+				type="submit"
+				style="line-height: 1.2; margin-bottom: 1.6rem"
+			>SEARCH</button>
+		</form>
+		<ul id="asset-list">
+			<div hx-get="/assets/1" hx-trigger="load" hx-swap="outerHTML" hx-target="this"></div>
+		</ul>
+	</div>
+}

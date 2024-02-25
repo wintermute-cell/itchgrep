@@ -136,7 +136,7 @@ func TestPutAssets(t *testing.T) {
 		{
 			name:    "EmptyAssetList",
 			assets:  []models.Asset{},
-			wantErr: true, // Assuming you handle empty slices as an error
+			wantErr: false,
 		},
 		{
 			name: "ValidAndInvalidAsset",

@@ -18,7 +18,6 @@ func main() {
 
 	// CREATE AND SETUP DB CLIENT
 	local := os.Getenv("DYNAMO_LOCAL") == "true"
-	logging.Debug("DYNAMO_LOCAL: %v", local)
 	dynamoClient, err := db.CreateDynamoClient(local)
 	if err != nil {
 		logging.Fatal("Failed to create DynamoDB client: %v", err)

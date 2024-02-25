@@ -1,0 +1,37 @@
+package templates
+
+import "fmt"
+import "itchgrep/pkg/models"
+
+templ AssetPage(pageNum int64, assets []models.Asset, isQuery bool, query string) {
+	for _, asset := range assets {
+		<li class="asset">
+			<a href={ templ.SafeURL(asset.Link) }>
+				<img src={ asset.ThumbUrl }/>
+				<div class="asset-name">{ asset.Title }</div>
+				<div class="asset-author">{ asset.Author }</div>
+				<div class="asset-description">{ asset.Description }</div>
+			</a>
+		</li>
+	}
+	<!-- TODO: could use intersect and a bigger box instead of reaveal to start loading before bottom is reached -->
+	if len(assets) > 0 {
+		if !isQuery {
+			<div
+				id="asset-load-trigger"
+				hx-get={ fmt.Sprintf("/assets/%d",
+            pageNum+1) }
+				hx-trigger="revealed"
+				hx-swap="outerHTML"
+			></div>
+		} else {
+			<div
+				id="asset-load-trigger"
+				hx-vals={ fmt.Sprintf("{\"query\": \"%s\"}", query) }
+				hx-post={ fmt.Sprintf("/query/%d", pageNum+1) }
+				hx-trigger="revealed"
+				hx-swap="outerHTML"
+			></div>
+		}
+	}
+}

@@ -1,0 +1,25 @@
+package templates
+
+templ Layout(title string, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>
+				{ title }
+			</title>
+			<link href="https://unpkg.com/normalize.css@8.0.1/normalize.css" rel="stylesheet"/>
+			<link href="https://unpkg.com/concrete.css@2.1.1/concrete.css" rel="stylesheet"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+			<script>
+				window.scrollTo(0, 0);
+			</script>
+		</head>
+		<body>
+			<main>
+				@content
+			</main>
+		</body>
+	</html>
+}

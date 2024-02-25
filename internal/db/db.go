@@ -5,9 +5,11 @@ import (
 	"errors"
 	"itchgrep/internal/logging"
 	"itchgrep/pkg/models"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -25,13 +27,23 @@ func CreateDynamoClient(useLocalDynamo bool) (*dynamodb.Client, error) {
 		}
 	} else {
 		logging.Info("Using local DynamoDB")
+		dbEndpoint := "http://dynamodb-local:8000"
+		if os.Getenv("DOCKER") != "true" {
+			dbEndpoint = "http://localhost:8000"
+		}
 		cfg, err = config.LoadDefaultConfig(context.TODO(),
+			config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+				Value: aws.Credentials{
+					AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "dummy",
+					Source: "Hard-coded credentials; values are irrelevant for local DynamoDB",
+				},
+			}),
 			config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
 				func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 					if service == dynamodb.ServiceID {
 						return aws.Endpoint{
 							PartitionID:   "aws",
-							URL:           "http://localhost:8000", // DynamoDB Local endpoint
+							URL:           dbEndpoint, // DynamoDB Local endpoint
 							SigningRegion: "eu-central-1",
 						}, nil
 					}
@@ -178,4 +190,26 @@ func GetAsset(svc *dynamodb.Client, gameId string) (models.Asset, error) {
 	}
 
 	return assetRead, nil
+}
+
+func GetAllAssets(svc *dynamodb.Client) ([]models.Asset, error) {
+	result, err := svc.Scan(context.TODO(), &dynamodb.ScanInput{
+		TableName: aws.String("Assets"),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var assets []models.Asset
+	for _, i := range result.Items {
+		var asset models.Asset
+		err = attributevalue.UnmarshalMap(i, &asset)
+		if err != nil {
+			return nil, err
+		}
+		assets = append(assets, asset)
+	}
+
+	return assets, nil
 }

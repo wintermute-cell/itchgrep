@@ -23,6 +23,13 @@ Use the included [Taskfile](https://taskfile.dev/) to run these services.
 - `task explore-data` will drop you into an `sqlite3` shell running through the
     DynamoDB Docker container. You do not need to have `sqlite3` installed for
     this.
+- `task webserver-local` will build and run the web server in a Docker
+    container together with the local DynamoDB in a separate container. Templ
+    templates are not copied during the build, but generated inside the
+    container.
+- `task templ` will generate `.go` files from any `.templ` files. This is not
+    required for building/running, to provide code completion and stop the language
+    server from complaining.
 
 ## Testing
 ### Dependencies (in addition to build dependencies):

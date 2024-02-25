@@ -4,8 +4,8 @@ tasks:
   dataservice-local:
     cmds:
       - task: prepare-db-volume
-      - task: run-dynamo-local
-      - defer: { task: stop-dynamo-local }
+      - docker run --name dynamodb-local -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
+      - defer: docker stop dynamodb-local && docker rm dynamodb-local
       - go run ./cmd/dataservice/main.go
     env:
       DYNAMO_LOCAL: true
@@ -13,9 +13,24 @@ tasks:
   explore-data:
     cmds:
       - task: prepare-db-volume
-      - task: run-dynamo-local
-      - defer: { task: stop-dynamo-local }
+      - docker run --name dynamodb-local -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
+      - defer: docker stop dynamodb-local && docker rm dynamodb-local
       - docker exec -it dynamodb-local sqlite3 /home/dynamodblocal/shared-local-instance.db
+
+  webserver-local:
+    cmds:
+      - task: prepare-db-volume
+      - docker network create itchgrep-network
+      - defer: docker network rm itchgrep-network
+      - docker run --name dynamodb-local --network itchgrep-network -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
+      - defer: docker stop dynamodb-local && docker rm dynamodb-local
+      - docker build -t itchgrep-webserver .
+      - defer: docker stop itchgrep-webserver-local && docker rm itchgrep-webserver-local
+      - docker run --name itchgrep-webserver-local --network itchgrep-network -p 8080:8080 -e DYNAMO_LOCAL=true -e DOCKER=true itchgrep-webserver
+
+  templ:
+    cmds:
+      - templ generate
 
   test:
     cmds:
@@ -38,14 +53,3 @@ tasks:
     cmds:
       - mkdir -p "$(pwd)/local_data"
       - touch "$(pwd)/local_data/shared-local-instance.db"
-
-  run-dynamo-local:
-    internal: true
-    cmds:
-      - docker run --name dynamodb-local -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
-
-  stop-dynamo-local:
-    internal: true
-    cmds:
-      - docker stop dynamodb-local && docker rm dynamodb-local
-
