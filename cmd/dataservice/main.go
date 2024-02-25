@@ -42,7 +42,6 @@ func main() {
 	}
 
 	nPages := int64(math.Ceil(float64(assetCount) / float64(respData.NumItems)))
-	nPages = 10 // for testing
 
 	var wg sync.WaitGroup
 	assetsChan := make(chan []models.Asset, int(nPages))
@@ -57,7 +56,7 @@ func main() {
 			defer pagesInProgress.Add(-1)
 			defer wg.Done()
 			pagesInProgress.Add(1)
-			time.Sleep(time.Second * time.Duration(rand.Int63n(nPages/18)))
+			time.Sleep(time.Second * time.Duration(rand.Int63n(nPages/18+1)))
 			data, ok := fetcher.FetchAssetPage(pageNum)
 			if !ok {
 				return
@@ -98,10 +97,8 @@ func main() {
 		assets = append(assets, assetPage...)
 	}
 
-	for _, asset := range assets {
-		err = db.PutAsset(dynamoClient, asset)
-		if err != nil {
-			logging.Error("Failed to put asset: %v", err)
-		}
+	err = db.PutAssets(dynamoClient, assets)
+	if err != nil {
+		logging.Error("Failed to put asset: %v", err)
 	}
 }

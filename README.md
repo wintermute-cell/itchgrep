@@ -16,10 +16,13 @@ The project is split up into two services:
 
 
 Use the included [Taskfile](https://taskfile.dev/) to run these services.
-- `task dataservice_local` will launch the `dataservice` with a local instance
-    of `dynamodb`. It will fetch all available assets on itch.io, store them in the
-    database and will then drop you in an `sqlite3` shell to explore the resulting
-    database.
+- `task dataservice-local` will launch the `dataservice` with a local instance
+    of DynamoDB. It will fetch all available assets on itch.io, store them in the
+    local DynamoDB database. The data is persisted as an `sqlite3` file called
+    `./local_data/shared-local-instance.db`.
+- `task explore-data` will drop you into an `sqlite3` shell running through the
+    DynamoDB Docker container. You do not need to have `sqlite3` installed for
+    this.
 
 ## Testing
 ### Dependencies (in addition to build dependencies):
@@ -36,4 +39,4 @@ You can also run specific tests on their own:
 - Golang (Dataservice, Web View)
 - Templ (Web View)
 - HTMX (Web View)
-- Dynamodb (Storage)
+- DynamoDB (Storage)

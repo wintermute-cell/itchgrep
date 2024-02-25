@@ -109,6 +109,56 @@ func PutAsset(svc *dynamodb.Client, asset models.Asset) error {
 	return nil
 }
 
+// PutAssets puts a slice of assets into the database in chunks of 10 per transaction.
+func PutAssets(svc *dynamodb.Client, assets []models.Asset) error {
+	chunks := chunkAssets(assets, 25) // Chunk size of 10
+
+	progress := 0
+	for _, chunk := range chunks {
+		logging.Info("Putting chunk %d of %d", progress, len(chunks))
+		progress += 1
+		var transactItems []types.TransactWriteItem
+		for _, asset := range chunk {
+			av, err := attributevalue.MarshalMap(asset)
+			if err != nil {
+				return err
+			}
+
+			transactItem := types.TransactWriteItem{
+				Put: &types.Put{
+					TableName: aws.String("Assets"),
+					Item:      av,
+				},
+			}
+
+			transactItems = append(transactItems, transactItem)
+		}
+
+		// Execute the transaction for the current chunk
+		_, err := svc.TransactWriteItems(context.TODO(), &dynamodb.TransactWriteItemsInput{
+			TransactItems: transactItems,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// chunkAssets splits the slice of assets into chunks of a specified size.
+func chunkAssets(assets []models.Asset, chunkSize int) [][]models.Asset {
+	var chunks [][]models.Asset
+	for i := 0; i < len(assets); i += chunkSize {
+		end := i + chunkSize
+		if end > len(assets) {
+			end = len(assets)
+		}
+		chunks = append(chunks, assets[i:end])
+	}
+	return chunks
+}
+
 func GetAsset(svc *dynamodb.Client, gameId string) (models.Asset, error) {
 	result, err := svc.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String("Assets"),
