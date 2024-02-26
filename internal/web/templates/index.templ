@@ -21,8 +21,8 @@ templ Index() {
 				style="line-height: 1.2; margin-bottom: 1.6rem"
 			>SEARCH</button>
 		</form>
-		<ul id="asset-list">
+		<div id="asset-list">
 			<div hx-get="/assets/1" hx-trigger="load" hx-swap="outerHTML" hx-target="this"></div>
-		</ul>
+		</div>
 	</div>
 }

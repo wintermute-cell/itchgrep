@@ -5,16 +5,21 @@ import "itchgrep/pkg/models"
 
 templ AssetPage(pageNum int64, assets []models.Asset, isQuery bool, query string) {
 	for _, asset := range assets {
-		<li class="asset">
+		<div class="asset">
 			<a href={ templ.SafeURL(asset.Link) }>
 				<img src={ asset.ThumbUrl }/>
-				<div class="asset-name">{ asset.Title }</div>
-				<div class="asset-author">{ asset.Author }</div>
-				<div class="asset-description">{ asset.Description }</div>
+				<div class="asset-details">
+					<div class="asset-head">
+						<div class="asset-title">{ asset.Title }</div>
+						<div class="asset-author">{ asset.Author }</div>
+					</div>
+					if asset.Description != "" {
+						<blockquote class="asset-description">{ asset.Description }</blockquote>
+					}
+				</div>
 			</a>
-		</li>
+		</div>
 	}
-	<!-- TODO: could use intersect and a bigger box instead of reaveal to start loading before bottom is reached -->
 	if len(assets) > 0 {
 		if !isQuery {
 			<div
@@ -23,6 +28,7 @@ templ AssetPage(pageNum int64, assets []models.Asset, isQuery bool, query string
             pageNum+1) }
 				hx-trigger="revealed"
 				hx-swap="outerHTML"
+				style="height: 10rem; width: 1rem;"
 			></div>
 		} else {
 			<div
@@ -31,6 +37,7 @@ templ AssetPage(pageNum int64, assets []models.Asset, isQuery bool, query string
 				hx-post={ fmt.Sprintf("/query/%d", pageNum+1) }
 				hx-trigger="revealed"
 				hx-swap="outerHTML"
+				style="height: 10rem; width: 1rem;"
 			></div>
 		}
 	}

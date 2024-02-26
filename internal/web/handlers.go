@@ -52,7 +52,7 @@ func (h *handler) HandleGetAssetPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	component := templates.Layout("TODO", templates.AssetPage(pageNum, assets, false, ""))
+	component := templates.AssetPage(pageNum, assets, false, "")
 	component.Render(r.Context(), w)
 }
 
@@ -78,6 +78,6 @@ func (h *handler) HandleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	component := templates.Layout("TODO", templates.AssetPage(pageNum, assets, true, query))
+	component := templates.AssetPage(pageNum, assets, true, query)
 	component.Render(r.Context(), w)
 }
