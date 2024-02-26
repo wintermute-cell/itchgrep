@@ -2,7 +2,17 @@ package templates
 
 templ Index() {
 	<div>
-		<h1>ITCHGREP</h1>
+		<div style="display: flex; justify-content: space-between; align-items: center;">
+			<h1 style="cursor: pointer;" hx-on::click="window.location.href='/';">ITCHGREP</h1>
+			<div style="text-align: right;">
+				<!-- Right-aligned project description -->
+				<p style="font-size: 1.6rem; margin: 0;">search itch.io/game-assets by text instead of just tags.</p>
+				<p style="font-size: 1.6rem; margin: 0;">created by <a href="#">winterveil</a>.</p>
+				<p style="font-size: 1.6rem; margin: 0; text-align: left; margin-top: -0.4rem;">
+					<a href="#">CONTACT</a> <a href="#">ABOUT</a> <a href="">GITHUB</a>
+				</p>
+			</div>
+		</div>
 		<form
 			hx-post="/query/1"
 			hx-target="#asset-list"
@@ -10,6 +20,7 @@ templ Index() {
 			style="display: flex; align-items: center;"
 		>
 			<input
+				id="query-input"
 				type="text"
 				name="query"
 				placeholder="bones..."

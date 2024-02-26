@@ -1,13 +1,12 @@
 package main
 
 import (
-	"itchgrep/internal/db"
 	"itchgrep/internal/fetcher"
 	"itchgrep/internal/logging"
+	"itchgrep/internal/storage"
 	"itchgrep/pkg/models"
 	"math"
 	"math/rand"
-	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,18 +14,6 @@ import (
 
 func main() {
 	logging.Init("", true)
-
-	// CREATE AND SETUP DB CLIENT
-	local := os.Getenv("DYNAMO_LOCAL") == "true"
-	dynamoClient, err := db.CreateDynamoClient(local)
-	if err != nil {
-		logging.Fatal("Failed to create DynamoDB client: %v", err)
-	}
-
-	err = db.CrateAssetsTableIfNotExists(dynamoClient)
-	if err != nil {
-		logging.Fatal("Failed to create Assets table: %v", err)
-	}
 
 	// FETCHING ASSETS
 	assetCount, err := fetcher.GetAssetCount()
@@ -96,7 +83,7 @@ func main() {
 		assets = append(assets, assetPage...)
 	}
 
-	err = db.PutAssets(dynamoClient, assets)
+	err = storage.PutAssets(assets)
 	if err != nil {
 		logging.Error("Failed to put asset: %v", err)
 	}

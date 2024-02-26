@@ -2,13 +2,12 @@ package cache
 
 import (
 	"errors"
-	"itchgrep/internal/db"
 	"itchgrep/internal/logging"
+	"itchgrep/internal/storage"
 	"itchgrep/pkg/models"
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/blevesearch/bleve"
 )
 
@@ -22,22 +21,15 @@ type Cache struct {
 	cacheLifetime float64
 	cacheLock     sync.RWMutex
 	pageSize      int64
-	dynamoClient  *dynamodb.Client
 	index         bleve.Index
 }
 
-func NewCache(lifetime float64, pageSize int64, localDb bool) *Cache {
-	dynamoClient, err := db.CreateDynamoClient(localDb)
-	if err != nil {
-		logging.Fatal("Failed to create DynamoDB client: %v", err)
-	}
-
+func NewCache(lifetime float64, pageSize int64) *Cache {
 	return &Cache{
 		dataCache:     dataCache{},
 		cacheLifetime: lifetime,
 		cacheLock:     sync.RWMutex{},
 		pageSize:      pageSize,
-		dynamoClient:  dynamoClient,
 	}
 }
 
@@ -81,15 +73,19 @@ func (c *Cache) RefreshDataCache() error {
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
-	newData, err := db.GetAllAssets(c.dynamoClient)
-	if err != nil {
+	preFetchTime := time.Now()
+	newData, err := storage.GetAssets()
+	if err != nil || newData == nil {
 		return err
 	}
+	fetchTime := time.Since(preFetchTime)
+	logging.Info("Fetched %d assets in %v", len(newData), fetchTime)
 
 	// TODO: we might want to check if the data has changed before re-indexing
 	// and otherwise just return nil
 
 	// Re-index the new data
+	preIndexTime := time.Now()
 	newIndex, err := c.reIndexAssets(newData)
 	if err != nil {
 		return err
@@ -98,6 +94,10 @@ func (c *Cache) RefreshDataCache() error {
 	if c.index != nil {
 		c.index.Close() // close the old index
 	}
+
+	indexTime := time.Since(preIndexTime)
+	logging.Info("Indexed %d assets in %v", len(newData), indexTime)
+
 	c.index = newIndex
 	c.dataCache.data = newData
 	c.dataCache.updatedAt = time.Now()
@@ -108,10 +108,21 @@ func (c *Cache) QueryCache(queryString string, pageIndex int64) ([]models.Asset,
 	c.cacheLock.RLock()
 	defer c.cacheLock.RUnlock()
 
-	// TODO: construct a query that boosts matches on title, then description, then author
-	query := bleve.NewQueryStringQuery(queryString)
+	titleQuery := bleve.NewMatchQuery(queryString)
+	titleQuery.SetField("Title")
+	titleQuery.SetBoost(3)
+	descriptionQuery := bleve.NewMatchQuery(queryString)
+	descriptionQuery.SetField("Description")
+	descriptionQuery.SetBoost(2)
+	authorQuery := bleve.NewMatchQuery(queryString)
+	authorQuery.SetField("Author")
+	authorQuery.SetBoost(1)
+
+	// Combine queries with a disjunction (OR) query
+	query := bleve.NewDisjunctionQuery(titleQuery, descriptionQuery, authorQuery)
+
 	from := (int(pageIndex) - 1) * int(c.pageSize)
-	searchRequest := bleve.NewSearchRequestOptions(query, int(c.pageSize), from, false) // TODO: adjust size as needed
+	searchRequest := bleve.NewSearchRequestOptions(query, int(c.pageSize), from, false)
 
 	searchRequest.Highlight = bleve.NewHighlight()
 	searchRequest.Fields = []string{"Title", "Author", "Description", "Link", "ThumbUrl"}

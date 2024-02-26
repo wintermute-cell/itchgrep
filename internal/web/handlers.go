@@ -25,7 +25,7 @@ func (h *handler) HandleHello(w http.ResponseWriter, r *http.Request) {
 }
 
 func handle404(w http.ResponseWriter, r *http.Request) {
-	component := templates.Layout("TODO", templates.Error404())
+	component := templates.Layout("ITCHGREP", templates.Error404())
 	component.Render(r.Context(), w)
 }
 
@@ -33,7 +33,7 @@ func (h *handler) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		handle404(w, r)
 	} else {
-		component := templates.Layout("TODO", templates.Index())
+		component := templates.Layout("ITCHGREP", templates.Index())
 		component.Render(r.Context(), w)
 	}
 }

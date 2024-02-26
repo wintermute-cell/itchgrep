@@ -9,11 +9,16 @@ templ Layout(title string, content templ.Component) {
 			<title>
 				{ title }
 			</title>
+			<link rel="icon" href="data:image/ico;base64,R0lGODlhEAAQAPEAAAAAAP///wAAAAAAACH5BAlkAAIAIf8LTkVUU0NBUEUyLjADAQAAACwAAAAAEAAQAAAC55QkEhERIYQQQggRQgghhBAEgiAIQhAEQRAEQRAEgSAIQRAAAAAAAAAIBAICQQAAAAAAAAAAAAAAAoJAAAAAAAAAAAAAAAACgUAgAAgEAgBAIBAABAKBQCAAAAQAgAAAAAAQEBAQEBAAABAAABAAAAAAEBAQEBAQAAAQAAAQABAQABAQEBAQEAAAEAAAEAAAEAAQEBAgEBAAEBAQAAAQEAAAEBAgIBAQAAAAAAAAAAAAABAQICAgEBAQEBAQEBAQEBAQICAgICAQEBAQEBAQEBAQICAgICAgICAQEBAQEBAgQIAAAQIKAAAh+QQJZAACACwAAAAAEAAQAAAC55QkEhERIYQQQggRQgghhBAEgiAIQhAEQRAEQRAEgSAIQRAAAAAAAAAIBAICQQAAAAAAAAAAAAAAAoJAAAAAAAAAAAAAAAACgUAgAAAAAAAAAAAABAKBQCAAAAQCgUAgAAAQEBAQEBAAABAQAAAQEAAAEBAQEBAQABAQEBAQEBAQABAQEBAQEAAQEAAAAAAQEAAQEBAgEBAAEAAAAAAAABAAEBAgIBAQAAAAAAAAAAAAABAQICAgEBAQEBAQEBAQEBAQICAgICAQEBAQEBAQEBAQICAgICAgICAQEBAQEBAgQIAAAQIKAAA7" type="image/png"/>
 			<link href="https://unpkg.com/normalize.css@8.0.1/normalize.css" rel="stylesheet"/>
 			<link href="https://unpkg.com/concrete.css@2.1.1/concrete.css" rel="stylesheet"/>
 			<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
-			<script>
-				window.scrollTo(0, 0);
+			<script type="text/javascript">
+                window.onload = function() {
+                    window.scrollTo(0, 0);
+                    document.getElementById('query-input').value = '';
+                    document.getElementById('query-input').focus();
+                }
 			</script>
 			<style>
             #asset-list {

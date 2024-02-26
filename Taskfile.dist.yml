@@ -1,32 +1,31 @@
 version: '3'
 
 tasks:
-  dataservice-local:
+  local-dataservice:
     cmds:
-      - task: prepare-db-volume
-      - docker run --name dynamodb-local -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
-      - defer: docker stop dynamodb-local && docker rm dynamodb-local
-      - go run ./cmd/dataservice/main.go
-    env:
-      DYNAMO_LOCAL: true
-
-  explore-data:
-    cmds:
-      - task: prepare-db-volume
-      - docker run --name dynamodb-local -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
-      - defer: docker stop dynamodb-local && docker rm dynamodb-local
-      - docker exec -it dynamodb-local sqlite3 /home/dynamodblocal/shared-local-instance.db
-
-  webserver-local:
-    cmds:
-      - task: prepare-db-volume
-      - docker network create itchgrep-network
+      - task: prepare-fake-gcs-volume
       - defer: docker network rm itchgrep-network
-      - docker run --name dynamodb-local --network itchgrep-network -d -p 8000:8000 -v $(pwd)/local_data/shared-local-instance.db:/home/dynamodblocal/shared-local-instance.db amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal
-      - defer: docker stop dynamodb-local && docker rm dynamodb-local
-      - docker build -t itchgrep-webserver .
-      - defer: docker stop itchgrep-webserver-local && docker rm itchgrep-webserver-local
-      - docker run --name itchgrep-webserver-local --network itchgrep-network -p 8080:8080 -e DYNAMO_LOCAL=true -e DOCKER=true itchgrep-webserver
+      - docker network create itchgrep-network
+
+      - defer: docker stop fake-gcs-server && docker rm fake-gcs-server
+      - docker run -d --name fake-gcs-server --network itchgrep-network -p 4443:4443 -v ${PWD}/local_data:/storage fsouza/fake-gcs-server -scheme http -data /storage
+
+      - docker build . -t itchgrep-dataservice -f "Dockerfile.dataservice"
+      - defer: docker stop itchgrep-dataservice && docker rm itchgrep-dataservice
+      - docker run --name itchgrep-dataservice --network itchgrep-network -e RUN_LOCAL=true itchgrep-dataservice
+
+  local-webserver:
+    cmds:
+      - task: prepare-fake-gcs-volume
+      - defer: docker network rm itchgrep-network
+      - docker network create itchgrep-network
+
+      - defer: docker stop fake-gcs-server && docker rm fake-gcs-server
+      - docker run -d --name fake-gcs-server --network itchgrep-network -p 4443:4443 -v ${PWD}/local_data:/storage fsouza/fake-gcs-server -scheme http -data /storage
+
+      - docker build . -t itchgrep-webserver -f "Dockerfile.webserver"
+      - defer: docker stop itchgrep-webserver && docker rm itchgrep-webserver
+      - docker run --name itchgrep-webserver --network itchgrep-network -p 8080:8080 -e PAGE_SIZE=36 -e RUN_LOCAL=true itchgrep-webserver
 
   templ:
     cmds:
@@ -34,22 +33,64 @@ tasks:
 
   test:
     cmds:
-      - task: test-db
+      - task: test-storage
 
-  test-db:
-    cmds:
-      - docker run --name dynamodb-local -d -p 8000:8000 amazon/dynamodb-local
-      - defer: docker stop dynamodb-local && docker rm dynamodb-local
-      - go test -v ./...
+  test-storage:
     silent: false
+    env:
+      RUN_TEST: true
+      RUN_LOCAL: true
+    cmds:
+      - task: prepare-temp-fake-gcs-volume
+      - defer: { task: clean-temp-fake-gcs-volume }
+
+      - defer: { task: clean-fake-gcs-server }
+      - cmd: docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/.tmp_local_data:/data fsouza/fake-gcs-server -scheme http -data /data -backend memory > /dev/null
+        silent: true
+
+      - go test internal/storage/*
 
 
   # --------------------------------
   # INTERNAL TASKS, NOT FOR RUNNING
   # --------------------------------
 
-  prepare-db-volume:
+  clean-fake-gcs-server:
     internal: true
+    silent: true
     cmds:
-      - mkdir -p "$(pwd)/local_data"
-      - touch "$(pwd)/local_data/shared-local-instance.db"
+      - docker stop fake-gcs-server > /dev/null && docker rm fake-gcs-server > /dev/null
+
+
+  prepare-fake-gcs-volume:
+    internal: true
+    silent: true
+    cmds:
+      - mkdir -p "$(pwd)/local_data/itchgrep-data/"
+      # we have to do the if check because the fake gcs container chowns the
+      # files to root (does not appear to reacht to --user flag)
+      - if [ ! -f "$(pwd)/local_data/itchgrep-data/.COME_ON_DOCKER" ];
+        then touch "$(pwd)/local_data/itchgrep-data/.COME_ON_DOCKER";
+        fi
+      # the `touch` is required because otherwise the directory won't be
+      # created in the container, causing interaction with the bucket to 404
+
+  prepare-temp-fake-gcs-volume:
+    internal: true
+    silent: true
+    cmds:
+      - rm -rf -p "$(pwd)/.tmp_local_data/
+      - mkdir -p "$(pwd)/.tmp_local_data/itchgrep-data/"
+      # we have to do the if check because the fake gcs container chowns the
+      # files to root (does not appear to reacht to --user flag)
+      - if [ ! -f "$(pwd)/local_data/.tmp_local_data/.COME_ON_DOCKER" ];
+        then touch "$(pwd)/local_data/.tmp_local_data/.COME_ON_DOCKER";
+        fi
+      # the `touch` is required because otherwise the directory won't be
+      # created in the container, causing interaction with the bucket to 404
+
+  clean-temp-fake-gcs-volume:
+    internal: true
+    silent: true
+    cmds:
+      - rm -rf "$(pwd)/.tmp_local_data/"

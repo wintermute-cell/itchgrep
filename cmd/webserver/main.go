@@ -34,9 +34,7 @@ func initializeCache() *cache.Cache {
 		logging.Error("Invalid PAGE_SIZE, defaulting to 36: %s", pageSizeStr)
 		pageSize = 36
 	}
-	localDb := os.Getenv("DYNAMO_LOCAL") == "true"
-	logging.Info("DYNAMO_LOCAL: %v", localDb)
-	c := cache.NewCache(cacheLifetime, pageSize, localDb)
+	c := cache.NewCache(cacheLifetime, pageSize)
 	c.RefreshDataCache()
 	return c
 }
