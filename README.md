@@ -6,7 +6,8 @@ instead of by tags.
 
 You can find this service hosted on [TODO](todo).
 
-If you like what I do you can [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)!
+If you want to show some love for what I do, or want help pay the server, you can...<br>
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)
 
 ## Running Locally
 
