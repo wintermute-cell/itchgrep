@@ -1,5 +1,8 @@
 
-# this directory is used to persist the data for the local DynamoDB instance
+# we don't commit generated templ .go files
+internal/web/templates/*.go
+
+# this directory is used to persist the data for the local GCS instance
 local_data/
 
 #--------------------------------------------------#

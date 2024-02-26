@@ -6,6 +6,8 @@ instead of by tags.
 
 You can find this service hosted on [TODO](todo).
 
+If you like what I do you can [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)!
+
 ## Running Locally
 
 If you want to [contribute](#contributing), or just run the project locally for your own use,
@@ -39,27 +41,25 @@ Use the included [Taskfile](https://taskfile.dev/) to run these services.
     language server from complaining.
 
 ## Testing
-### Dependencies (in addition to build dependencies):
-None so far :)
-
-### Running Tests
 Tests can be run by using the included [Taskfile](https://taskfile.dev/).
 
 - `task test`: Runs all of the test tasks below.
 - `task test-storage`: Tests the `storage` package, requires `Docker` to be running.
 
 ## Techstack
-- ![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white) Go
-- ![Templ](https://img.shields.io/badge/Templ-000000?style=for-the-badge&logo=templ&logoColor=white) Templ
-- ![HTMX](https://img.shields.io/badge/HTMX-FF5733?style=for-the-badge&logo=htmx&logoColor=white) HTMX
-- ![Google Cloud Storage](https://img.shields.io/badge/Google_Cloud_Storage-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white) Google Cloud Storage
-
+![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white)
+![Templ](https://img.shields.io/badge/Templ-000000?style=for-the-badge&logo=templ&logoColor=white)
+![HTMX](https://img.shields.io/badge/HTMX-FF5733?style=for-the-badge&logo=htmx&logoColor=white)
+![Google Cloud](https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
 
 ## Contributing
-TODO, Outline:
-- major features -> ask first as issue
-- use go fmt to format code
-- beginners welcome, take your time, ask if unsure
-- feature request as issues
-- keep contribution related discussion in issues, no other comms channels
-
+- before posting a pull request, please use [`go fmt`](https://go.dev/blog/gofmt) to format your code.
+- beginners to open source are welcome. if you'd like to contribute, but don't
+    understand something, you're welcome to ask using an issue.
+- please post feature requests as one issue per feature.
+- before working on a larger contribution, please open an issue to ask if the
+    feature you want to implement would be welcome.
+- to maintain a transparent workflow, please keep all discourse regarding work
+    on this repository in the github issues, don't message me through other
+    channels to discuss this.
