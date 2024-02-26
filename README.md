@@ -1,9 +1,15 @@
 <!-- LTeX: language=en-US -->
 # itchgrep
-A tool for searching [itch.io](https://itch.io/) assets by name and
-description.
+A tool that helps you find more and better assets for your games.
+It enables searching [itch.io](https://itch.io/) game assets with text queries
+instead of by tags.
+
+You can find this service hosted on [TODO](todo).
 
 ## Running Locally
+
+If you want to [contribute](#contributing), or just run the project locally for your own use,
+follow the instructions below.
 
 > This project is built and maintained on Linux. While I don't think it's
 > generally impossible to run on Windows, but the
@@ -43,7 +49,17 @@ Tests can be run by using the included [Taskfile](https://taskfile.dev/).
 - `task test-storage`: Tests the `storage` package, requires `Docker` to be running.
 
 ## Techstack
-- Golang (Dataservice, Web View)
-- Templ (Web View)
-- HTMX (Web View)
-- DynamoDB (Storage)
+- ![Go](https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white) Go
+- ![Templ](https://img.shields.io/badge/Templ-000000?style=for-the-badge&logo=templ&logoColor=white) Templ
+- ![HTMX](https://img.shields.io/badge/HTMX-FF5733?style=for-the-badge&logo=htmx&logoColor=white) HTMX
+- ![Google Cloud Storage](https://img.shields.io/badge/Google_Cloud_Storage-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white) Google Cloud Storage
+
+
+## Contributing
+TODO, Outline:
+- major features -> ask first as issue
+- use go fmt to format code
+- beginners welcome, take your time, ask if unsure
+- feature request as issues
+- keep contribution related discussion in issues, no other comms channels
+
