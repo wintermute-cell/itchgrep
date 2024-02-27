@@ -7,6 +7,7 @@ import (
 	"itchgrep/internal/web"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -39,17 +40,32 @@ func initializeCache() *cache.Cache {
 	return c
 }
 
+func setMemoryLimit() {
+	memoryLimitStr := os.Getenv("MEMORY_LIMIT_MB")
+	memoryLimit, err := strconv.ParseInt(memoryLimitStr, 10, 64)
+	if err != nil {
+		logging.Error("Invalid MEMORY_LIMIT_MB, defaulting to 1024MB: %s", memoryLimitStr)
+		memoryLimit = 1024
+	}
+	logging.Info("Setting Memory Limit to: %v MB", memoryLimit)
+	debug.SetMemoryLimit(1024 * 1024 * memoryLimit) // 512MB
+}
+
 func main() {
 	// LOGGING
 	logging.Init("", true)
+
+	// MEMORY LIMIT
+	setMemoryLimit()
 
 	// CACHE INIT
 	cache := initializeCache()
 
 	// HANDLERS
 	r := chi.NewRouter()
-	h := web.NewHandler(cache)
 	r.Use(logMiddleware)
+
+	h := web.NewHandler(cache)
 	r.Get("/", h.HandleIndex)
 	r.Get("/assets/{page}", h.HandleGetAssetPage)
 	r.Post("/query/{page}", h.HandleQuery)
@@ -60,5 +76,6 @@ func main() {
 		port = ":8080" // Default port to listen on
 	}
 	logging.Info("Server started at port %s", port)
+
 	http.ListenAndServe(port, r)
 }
