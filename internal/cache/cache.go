@@ -21,7 +21,7 @@ type Cache struct {
 	cacheLifetime float64
 	cacheLock     sync.RWMutex
 	pageSize      int64
-	index         bleve.Index
+	index         *bleve.Index
 }
 
 func NewCache(lifetime float64, pageSize int64) *Cache {
@@ -44,12 +44,12 @@ func (c *Cache) InitIndex() error {
 	indexMapping := bleve.NewIndexMapping()
 	// Customize the index mapping as needed
 
-	var err error
-	c.index, err = bleve.NewMemOnly(indexMapping)
+	idx, err := bleve.NewMemOnly(indexMapping)
+	c.index = &idx
 	return err
 }
 
-func (c *Cache) reIndexAssets(assets []models.Asset) (bleve.Index, error) {
+func (c *Cache) reIndexAssets(assets []models.Asset) (*bleve.Index, error) {
 	// Create a new index for the re-indexing process, so we don't break the
 	// old one in case of errors
 	newIndexMapping := bleve.NewIndexMapping() // TODO: customize as needed
@@ -66,7 +66,7 @@ func (c *Cache) reIndexAssets(assets []models.Asset) (bleve.Index, error) {
 		}
 	}
 
-	return newIndex, nil
+	return &newIndex, nil
 }
 
 func (c *Cache) RefreshDataCache() error {
@@ -92,7 +92,7 @@ func (c *Cache) RefreshDataCache() error {
 	}
 
 	if c.index != nil {
-		c.index.Close() // close the old index
+		(*c.index).Close() // close the old index
 	}
 
 	indexTime := time.Since(preIndexTime)
@@ -107,6 +107,13 @@ func (c *Cache) RefreshDataCache() error {
 func (c *Cache) QueryCache(queryString string, pageIndex int64) ([]models.Asset, error) {
 	c.cacheLock.RLock()
 	defer c.cacheLock.RUnlock()
+
+	// check for stale cache, refresh if needed
+	if c.IsCacheExpired() {
+		if err := c.RefreshDataCache(); err != nil {
+			return nil, err
+		}
+	}
 
 	titleQuery := bleve.NewMatchQuery(queryString)
 	titleQuery.SetField("Title")
@@ -127,7 +134,7 @@ func (c *Cache) QueryCache(queryString string, pageIndex int64) ([]models.Asset,
 	searchRequest.Highlight = bleve.NewHighlight()
 	searchRequest.Fields = []string{"Title", "Author", "Description", "Link", "ThumbUrl"}
 
-	searchResult, err := c.index.Search(searchRequest)
+	searchResult, err := (*c.index).Search(searchRequest)
 	if err != nil {
 		return nil, err
 	}
