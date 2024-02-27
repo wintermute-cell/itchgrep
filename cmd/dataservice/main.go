@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"itchgrep/internal/fetcher"
 	"itchgrep/internal/logging"
 	"itchgrep/internal/storage"
 	"itchgrep/pkg/models"
 	"math"
 	"math/rand"
+	"net/http"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,6 +18,34 @@ import (
 func main() {
 	logging.Init("", true)
 
+	http.HandleFunc("/trigger-fetch", handleFetchTrigger)
+	port := fmt.Sprintf(":%s", os.Getenv("PORT")) // as per cloud run standard
+	if port == ":" {
+		port = ":8080"
+	}
+	logging.Info("Server listening on port %s", port)
+	if err := http.ListenAndServe(port, nil); err != nil {
+		logging.Fatal("Server failed to start: %v", err)
+	}
+}
+
+func handleFetchTrigger(w http.ResponseWriter, r *http.Request) {
+	// Ensure that we only accept GET requests
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	go func() {
+		fetchAndStoreAssets()
+	}()
+
+	// Respond to indicate the process has started
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "Asset fetch and store initiated")
+}
+
+func fetchAndStoreAssets() {
 	// FETCHING ASSETS
 	assetCount, err := fetcher.GetAssetCount()
 	if err != nil {
@@ -42,7 +73,7 @@ func main() {
 			defer pagesInProgress.Add(-1)
 			defer wg.Done()
 			pagesInProgress.Add(1)
-			time.Sleep(time.Second * time.Duration(rand.Int63n(nPages/18+1)))
+			time.Sleep(time.Second * time.Duration(rand.Int63n(nPages/18+1))) // this spreads out the requests
 			data, ok := fetcher.FetchAssetPage(pageNum)
 			if !ok {
 				return
@@ -82,7 +113,10 @@ func main() {
 	for assetPage := range assetsChan {
 		assets = append(assets, assetPage...)
 	}
+	logging.Info("Successfully fetched %d assets", len(assets))
 
+	// STORING ASSETS
+	logging.Info("Storing assets in cloud storage file")
 	err = storage.PutAssets(assets)
 	if err != nil {
 		logging.Error("Failed to put asset: %v", err)
