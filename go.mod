@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/storage v1.38.0
 	github.com/PuerkitoBio/goquery v1.9.0
 	github.com/a-h/templ v0.2.543
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.30.1
 	github.com/blevesearch/bleve v1.0.14
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/stretchr/testify v1.8.4
@@ -20,12 +19,6 @@ require (
 	cloud.google.com/go/iam v1.1.6 // indirect
 	github.com/RoaringBitmap/roaring v1.9.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.25.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.9.2 // indirect
-	github.com/aws/smithy-go v1.20.1 // indirect
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/mmap-go v1.0.4 // indirect
@@ -48,7 +41,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/steveyen/gtreap v0.1.0 // indirect
