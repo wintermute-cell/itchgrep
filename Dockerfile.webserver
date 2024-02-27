@@ -32,7 +32,8 @@ COPY --from=builder /app/server /
 EXPOSE 8080
 
 # Set the environment variables
-ENV CACHE_LIFETIME_HOURS=1
+ENV CACHE_LIFETIME_HOURS=24
+ENV PAGE_SIZE=36
 
 # Run your application.
 CMD ["/server"]
