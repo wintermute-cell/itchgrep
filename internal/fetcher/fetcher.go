@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"itchgrep/internal/logging"
 	"itchgrep/pkg/models"
+	"math"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -52,33 +53,56 @@ func ParseAssetPage(respData itchResponse) ([]models.Asset, error) {
 }
 
 func FetchAssetPage(pageNum int64) (itchResponse, bool) {
-	for {
+	maxAttempts := 11
+	baseDelay := 1 * time.Second
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
 		// Construct the URL with the page number
 		url := fmt.Sprintf("https://itch.io/game-assets?page=%d&format=json", pageNum)
 		resp, err := http.Get(url)
 		if err != nil {
-			logging.Error("Failed to fetch data: %v", err)
+			logging.Warning("Failed to fetch data at attempt %d: %v", attempt, err)
+			if attempt < maxAttempts-1 {
+				time.Sleep(calculateBackoff(attempt, baseDelay))
+			}
+			continue
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			logging.Warning("Too many requests, waiting and retrying")
+			if attempt < maxAttempts-1 {
+				time.Sleep(calculateBackoff(attempt, baseDelay))
+			}
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			logging.Error("Unexpected status code: %d %s", resp.StatusCode, resp.Status)
+			resp.Body.Close()
 			return itchResponse{}, false
 		}
 
-		if resp.StatusCode == http.StatusOK {
-			defer resp.Body.Close()
-			var respData itchResponse
-			if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
-				logging.Error("Failed to decode response: %v", err)
-				return itchResponse{}, false
-			}
-			return respData, true
-		} else if resp.StatusCode == 429 {
-			// Too Many Requests, wait a second and retry
-			time.Sleep(time.Duration(rand.Int63n(7)+3) * time.Second)
-			continue
-		} else {
-			logging.Error("Unexpected status code: %d %s", resp.StatusCode, resp.Status)
-			resp.Body.Close() // Ensure response body is closed in this case
+		defer resp.Body.Close()
+		var respData itchResponse
+		if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
+			logging.Error("Failed to decode response: %v", err)
 			return itchResponse{}, false
 		}
+		return respData, true
 	}
+
+	logging.Error("Failed to fetch data after %d attempts", maxAttempts)
+	return itchResponse{}, false
+}
+
+// calculateBackoff calculates the delay for the next retry attempt using
+// exponential backoff with jitter.
+func calculateBackoff(attempt int, baseDelay time.Duration) time.Duration {
+	// Exponential backoff factor
+	expFactor := math.Pow(1.95, float64(attempt))
+	// Add jitter by introducing randomness
+	jitter := rand.Float64() * float64(baseDelay) * expFactor
+	return time.Duration(jitter)
 }
 
 func GetAssetCount() (int64, error) {
