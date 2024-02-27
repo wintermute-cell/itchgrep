@@ -4,7 +4,7 @@ A tool that helps you find more and better assets for your games.
 It enables searching [itch.io](https://itch.io/) game assets with text queries
 instead of by tags.
 
-You can find this service hosted on [TODO](todo).
+You can find this service hosted on [TODO](https://itchgrep.com/).
 
 If you want to show some love for what I do, or want help pay the server, you can...<br>
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)

@@ -66,7 +66,7 @@ tasks:
         --set-env-vars MEMORY_LIMIT_MB=1400
     vars:
       PROJECT_ID: itchgrep
-      REGION: europe-west9
+      REGION: europe-west1
 
   deploy-dataservice:
     cmds:
@@ -80,7 +80,7 @@ tasks:
         --no-cpu-throttling
     vars:
       PROJECT_ID: itchgrep
-      REGION: europe-west9
+      REGION: europe-west1
 
   create-dataservice-scheduler-job:
     cmds:
@@ -100,7 +100,7 @@ tasks:
       - test -n "$DATASERVICE_URL"
     vars:
       # paris is not supported for cloud scheduler
-      LOCATION: europe-west3
+      LOCATION: europe-west1
 
 
   # --------------------------------
