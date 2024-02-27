@@ -1,6 +1,15 @@
 version: '3'
 
 tasks:
+
+  # --------------------------------
+  #     LOCAL DEVELOPMENT
+  # --------------------------------
+
+  templ:
+    cmds:
+      - templ generate
+
   local-dataservice:
     cmds:
       - task: prepare-fake-gcs-volume
@@ -27,9 +36,76 @@ tasks:
       - defer: docker stop itchgrep-webserver && docker rm itchgrep-webserver
       - docker run --name itchgrep-webserver --network itchgrep-network -p 8080:8080 -e PAGE_SIZE=36 -e RUN_LOCAL=true itchgrep-webserver
 
-  templ:
+  # --------------------------------
+  #     DEPLOYMENT
+  # --------------------------------
+
+  gcloud-setup:
     cmds:
-      - templ generate
+      - gcloud auth login
+      - gcloud config set project "{{.PROJECT_ID}}"
+      - gcloud auth configure-docker
+    vars:
+      PROJECT_ID: itchgrep
+
+  deploy-all:
+    cmds:
+      - task: deploy-webserver
+      - task: deploy-dataservice
+
+  deploy-webserver:
+    cmds:
+      - docker build -f Dockerfile.webserver -t "gcr.io/{{.PROJECT_ID}}/webserver" .
+      - docker push "gcr.io/{{.PROJECT_ID}}/webserver"
+      - gcloud run deploy webserver
+        --image "gcr.io/{{.PROJECT_ID}}/webserver"
+        --platform managed
+        --allow-unauthenticated
+        --region "{{.REGION}}"
+        --memory 1500Mi
+        --set-env-vars MEMORY_LIMIT_MB=1400
+    vars:
+      PROJECT_ID: itchgrep
+      REGION: europe-west9
+
+  deploy-dataservice:
+    cmds:
+      - docker build -f Dockerfile.dataservice -t "gcr.io/{{.PROJECT_ID}}/dataservice" .
+      - docker push "gcr.io/{{.PROJECT_ID}}/dataservice"
+      - gcloud run deploy dataservice
+        --image "gcr.io/{{.PROJECT_ID}}/dataservice"
+        --platform managed
+        --no-allow-unauthenticated
+        --region "{{.REGION}}"
+        --no-cpu-throttling
+    vars:
+      PROJECT_ID: itchgrep
+      REGION: europe-west9
+
+  create-dataservice-scheduler-job:
+    cmds:
+      - echo "Using $SERVICE_ACCOUNT_EMAIL"
+      - echo "Using $DATASERVICE_URL"
+      - gcloud scheduler jobs create http dataservice-job
+        --schedule="0 0 * * *"
+        --http-method=GET
+        --uri="$DATASERVICE_URL/trigger-fetch"
+        --oidc-service-account-email="$SERVICE_ACCOUNT_EMAIL"
+        --oidc-token-audience="$DATASERVICE_URL"
+        --location="{{.LOCATION}}"
+    preconditions:
+      # SERVICE_ACCOUNT_EMAIL and DATASERVICE_URL must be specified via
+      # env vars. don't include them here for security purposes.
+      - test -n "$SERVICE_ACCOUNT_EMAIL"
+      - test -n "$DATASERVICE_URL"
+    vars:
+      # paris is not supported for cloud scheduler
+      LOCATION: europe-west3
+
+
+  # --------------------------------
+  #     TESTING
+  # --------------------------------
 
   test:
     cmds:
