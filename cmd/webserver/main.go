@@ -7,7 +7,6 @@ import (
 	"itchgrep/internal/web"
 	"net/http"
 	"os"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -33,23 +32,9 @@ func initializeCache() *cache.Cache {
 	return c
 }
 
-func setMemoryLimit() {
-	memoryLimitStr := os.Getenv("MEMORY_LIMIT_MB")
-	memoryLimit, err := strconv.ParseInt(memoryLimitStr, 10, 64)
-	if err != nil {
-		logging.Error("Invalid MEMORY_LIMIT_MB, defaulting to 1024MB: %s", memoryLimitStr)
-		memoryLimit = 1024
-	}
-	logging.Info("Setting Memory Limit to: %v MB", memoryLimit)
-	debug.SetMemoryLimit(1024 * 1024 * memoryLimit) // 512MB
-}
-
 func main() {
 	// LOGGING
 	logging.Init("", true)
-
-	// MEMORY LIMIT
-	setMemoryLimit()
 
 	// CACHE INIT
 	cache := initializeCache()

@@ -80,8 +80,6 @@ tasks:
         --platform managed
         --allow-unauthenticated
         --region "{{.REGION}}"
-        --memory 1500Mi
-        --set-env-vars MEMORY_LIMIT_MB=1400
     vars:
       PROJECT_ID: itchgrep
       REGION: europe-west1
