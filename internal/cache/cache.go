@@ -5,6 +5,7 @@ import (
 	"itchgrep/internal/logging"
 	"itchgrep/internal/storage"
 	"itchgrep/pkg/models"
+	"slices"
 	"sync"
 	"time"
 
@@ -92,6 +93,11 @@ func (c *Cache) RefreshDataCache() error {
 
 	fetchTime = time.Since(preFetchTime)
 	logging.Info("Fetched and opened index in %v", fetchTime)
+
+	// sort newData by popularity (smaller numbers first)
+	slices.SortFunc(newData, func(i, j models.Asset) int {
+		return int(i.InvPopularity - j.InvPopularity)
+	})
 
 	// overwrite the old data with the new data
 	c.data = newData
