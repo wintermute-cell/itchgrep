@@ -5,7 +5,10 @@ It enables searching [itch.io](https://itch.io/) game assets with text queries
 instead of by tags.
 
 You can find this service hosted on [itchgrep.com](https://itchgrep.com/).
-We also have a [discord community](https://discord.gg/f8nyyK4ngZ).
+
+I also have a [discord community](https://discord.gg/f8nyyK4ngZ) (since today hah),
+where I want to talk about all the things I build and how I build them. Maybe
+we can learn from each other!
 
 If you want to show some love for what I do, or want help pay the server, you can...<br>
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)
