@@ -94,6 +94,7 @@ tasks:
         --no-allow-unauthenticated
         --region "{{.REGION}}"
         --no-cpu-throttling
+        --memory 1500Mi
     vars:
       PROJECT_ID: itchgrep
       REGION: europe-west1
