@@ -4,7 +4,8 @@ A tool that helps you find more and better assets for your games.
 It enables searching [itch.io](https://itch.io/) game assets with text queries
 instead of by tags.
 
-You can find this service hosted on [TODO](https://itchgrep.com/).
+You can find this service hosted on [itchgrep.com](https://itchgrep.com/).
+We also have a [discord community](https://discord.gg/f8nyyK4ngZ).
 
 If you want to show some love for what I do, or want help pay the server, you can...<br>
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)
@@ -30,10 +31,15 @@ The project is split up into two services:
 - The `webserver`, presenting the stored data with search tools.
 
 Use the included [Taskfile](https://taskfile.dev/) to run these services.
-- `task local-dataservice` will launch the `dataservice` with a local instance
-    of GCS. It will fetch all available assets on itch.io, store them in the
-    local GCS. The data is persisted as a `.json` file called
-    `./local_data/itchgrep-data/assets.json`.
+> - `task local-dataservice` will launch the `dataservice` with a local instance
+>     of GCS. Send a `GET` request to its trigger endpoint: 
+>     `curl -X GET "localhost:8080/trigger-fetch"`.
+>     This will cause the service to scrape the data from itch.io, index it and
+>     store both data and index on the local GCS.
+- !! The way of running described above is currently not working properly, I am
+    looking for assistance on this. Please see [Issue #1](https://github.com/wintermute-cell/itchgrep/issues/1).
+    In the meantime use `task local-dataservice-temp-fix`. This runs the
+    `dataservice` without docker.
 - `task local-webserver` will build and run the web server in a Docker
     container together with the local GCS in a separate container. `Templ`
     templates are not copied during the build, but generated inside the
@@ -98,6 +104,7 @@ Tests can be run by using the included [Taskfile](https://taskfile.dev/).
 ## Techstack
 - [Go](https://go.dev/)
 - [Templ](https://github.com/a-h/templ)
+- [Bleve](https://github.com/blevesearch/bleve)
 - [HTMX](https://htmx.org/)
 - [Google Cloud](https://cloud.google.com/?hl=en)
 - [Docker](https://www.docker.com/)

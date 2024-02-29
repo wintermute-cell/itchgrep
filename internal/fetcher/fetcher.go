@@ -22,7 +22,7 @@ type itchResponse struct {
 	Content  string `json:"content"`
 }
 
-func ParseAssetPage(respData itchResponse) ([]models.Asset, error) {
+func ParseAssetPage(respData itchResponse, pageNum int64) ([]models.Asset, error) {
 	// parse html
 	queryDoc, err := goquery.NewDocumentFromReader(strings.NewReader(respData.Content))
 	if err != nil {
@@ -41,19 +41,20 @@ func ParseAssetPage(respData itchResponse) ([]models.Asset, error) {
 		link, _ := linkNode.Attr("href")
 		thumbUrl, _ := linkNode.Children().First().Attr("data-lazy_src")
 		assets = append(assets, models.Asset{
-			GameId:      gameId,
-			Title:       title,
-			Author:      author,
-			Description: description,
-			Link:        link,
-			ThumbUrl:    thumbUrl,
+			GameId:        gameId,
+			Title:         title,
+			Author:        author,
+			Description:   description,
+			Link:          link,
+			ThumbUrl:      thumbUrl,
+			InvPopularity: pageNum,
 		})
 	})
 	return assets, nil
 }
 
 func FetchAssetPage(pageNum int64) (itchResponse, bool) {
-	maxAttempts := 11
+	maxAttempts := 21
 	baseDelay := 1 * time.Second
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
@@ -67,6 +68,7 @@ func FetchAssetPage(pageNum int64) (itchResponse, bool) {
 			}
 			continue
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusTooManyRequests {
 			logging.Warning("Too many requests, waiting and retrying")
@@ -82,7 +84,6 @@ func FetchAssetPage(pageNum int64) (itchResponse, bool) {
 			return itchResponse{}, false
 		}
 
-		defer resp.Body.Close()
 		var respData itchResponse
 		if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
 			logging.Error("Failed to decode response: %v", err)
@@ -99,9 +100,9 @@ func FetchAssetPage(pageNum int64) (itchResponse, bool) {
 // exponential backoff with jitter.
 func calculateBackoff(attempt int, baseDelay time.Duration) time.Duration {
 	// Exponential backoff factor
-	expFactor := math.Pow(1.95, float64(attempt))
+	expFactor := math.Pow(1.36, float64(attempt))
 	// Add jitter by introducing randomness
-	jitter := rand.Float64() * float64(baseDelay) * expFactor
+	jitter := rand.Float64() * expFactor * float64(baseDelay)
 	return time.Duration(jitter)
 }
 

@@ -81,3 +81,8 @@ func (h *handler) HandleQuery(w http.ResponseWriter, r *http.Request) {
 	component := templates.AssetPage(pageNum, assets, true, query)
 	component.Render(r.Context(), w)
 }
+
+func (h *handler) HandleAbout(w http.ResponseWriter, r *http.Request) {
+	component := templates.About()
+	component.Render(r.Context(), w)
+}

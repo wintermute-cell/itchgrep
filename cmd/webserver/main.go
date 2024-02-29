@@ -21,13 +21,6 @@ func logMiddleware(next http.Handler) http.Handler {
 }
 
 func initializeCache() *cache.Cache {
-	cacheLifetimeStr := os.Getenv("CACHE_LIFETIME_HOURS")
-	cacheLifetime, err := strconv.ParseFloat(cacheLifetimeStr, 64)
-	logging.Info("CACHE_LIFETIME_HOURS: %v", cacheLifetime)
-	if err != nil {
-		logging.Error("Invalid CACHE_LIFETIME_HOURS, defaulting to 24h: %s", cacheLifetimeStr)
-		cacheLifetime = 24
-	}
 	pageSizeStr := os.Getenv("PAGE_SIZE")
 	pageSize, err := strconv.ParseInt(pageSizeStr, 10, 64)
 	logging.Info("PAGE_SIZE: %v", pageSize)
@@ -35,7 +28,7 @@ func initializeCache() *cache.Cache {
 		logging.Error("Invalid PAGE_SIZE, defaulting to 36: %s", pageSizeStr)
 		pageSize = 36
 	}
-	c := cache.NewCache(cacheLifetime, pageSize)
+	c := cache.NewCache(pageSize)
 	c.RefreshDataCache()
 	return c
 }
@@ -69,6 +62,7 @@ func main() {
 	r.Get("/", h.HandleIndex)
 	r.Get("/assets/{page}", h.HandleGetAssetPage)
 	r.Post("/query/{page}", h.HandleQuery)
+	r.Get("/about", h.HandleAbout)
 
 	// SERVER
 	port := fmt.Sprintf(":%s", os.Getenv("PORT"))

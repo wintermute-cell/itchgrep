@@ -55,6 +55,11 @@ templ Layout(title string, content templ.Component) {
                 -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
                 display: -webkit-box;
+
+                /* We need this to correctly handle */
+                /* long continuous strings without */
+                /* breakable chars like spaces or dashes */
+                word-break: break-word;
             }
 
             .asset-author {
@@ -73,6 +78,11 @@ templ Layout(title string, content templ.Component) {
                 -webkit-line-clamp: 2;
                 -webkit-box-orient: vertical;
                 display: -webkit-box;
+
+                /* We need this to correctly handle */
+                /* long continuous strings without */
+                /* breakable chars like spaces or dashes */
+                word-break: break-word;
             }
             </style>
 		</head>

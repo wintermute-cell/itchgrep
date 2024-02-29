@@ -24,8 +24,7 @@ templ AssetPage(pageNum int64, assets []models.Asset, isQuery bool, query string
 		if !isQuery {
 			<div
 				id="asset-load-trigger"
-				hx-get={ fmt.Sprintf("/assets/%d",
-            pageNum+1) }
+				hx-get={ fmt.Sprintf("/assets/%d", pageNum+1) }
 				hx-trigger="revealed"
 				hx-swap="outerHTML"
 				style="height: 10rem; width: 1rem;"

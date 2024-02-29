@@ -9,27 +9,31 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search/query"
 )
 
-type dataCache struct {
-	data      []models.Asset
-	updatedAt time.Time
-}
-
 type Cache struct {
-	dataCache     dataCache
-	cacheLifetime float64
-	cacheLock     sync.RWMutex
-	pageSize      int64
-	index         *bleve.Index
+	cacheLock sync.RWMutex
+
+	dataMap map[string]models.Asset
+	data    []models.Asset
+	index   bleve.Index
+
+	// the time the data was last updated on the server.
+	// if we check if the current time is greater than this time, we know the
+	// cache is expired
+	dataUpdatedTime time.Time
+
+	// the cache can be retrieved as chunks/pages
+	pageSize int64
 }
 
-func NewCache(lifetime float64, pageSize int64) *Cache {
+func NewCache(pageSize int64) *Cache {
 	return &Cache{
-		dataCache:     dataCache{},
-		cacheLifetime: lifetime,
-		cacheLock:     sync.RWMutex{},
-		pageSize:      pageSize,
+		dataMap:         make(map[string]models.Asset),
+		cacheLock:       sync.RWMutex{},
+		pageSize:        pageSize,
+		dataUpdatedTime: time.Time{},
 	}
 }
 
@@ -37,42 +41,31 @@ func (c *Cache) IsCacheExpired() bool {
 	c.cacheLock.RLock()
 	defer c.cacheLock.RUnlock()
 
-	return time.Since(c.dataCache.updatedAt).Hours() > c.cacheLifetime
-}
+	// if we never updated the cache, it is expired
+	if c.dataUpdatedTime.IsZero() {
+		return true
+	}
 
-func (c *Cache) InitIndex() error {
-	indexMapping := bleve.NewIndexMapping()
-	// Customize the index mapping as needed
-
-	idx, err := bleve.NewMemOnly(indexMapping)
-	c.index = &idx
-	return err
-}
-
-func (c *Cache) reIndexAssets(assets []models.Asset) (*bleve.Index, error) {
-	// Create a new index for the re-indexing process, so we don't break the
-	// old one in case of errors
-	newIndexMapping := bleve.NewIndexMapping() // TODO: customize as needed
-	newIndex, err := bleve.NewMemOnly(newIndexMapping)
+	// otherwise, we check if the data on the server is newer than the data in the cache
+	storageUpdateTime, err := storage.GetAssetsUpdateTime()
 	if err != nil {
-		return nil, err
+		logging.Error("Failed to get assets update time: %v", err)
+		return false
 	}
-
-	// Index each asset in the new index
-	for _, asset := range assets {
-		if err := newIndex.Index(asset.GameId, asset); err != nil {
-			newIndex.Close() // clean up the failed new index
-			return nil, err
-		}
-	}
-
-	return &newIndex, nil
+	return c.dataUpdatedTime.Before(storageUpdateTime)
 }
 
 func (c *Cache) RefreshDataCache() error {
 	c.cacheLock.Lock()
 	defer c.cacheLock.Unlock()
 
+	// we fetch this here already, since we can just stop if we fail to fetch even this
+	newServerUpdateTime, err := storage.GetAssetsUpdateTime()
+	if err != nil {
+		return err
+	}
+
+	// fetch asset data
 	preFetchTime := time.Now()
 	newData, err := storage.GetAssets()
 	if err != nil || newData == nil {
@@ -81,40 +74,58 @@ func (c *Cache) RefreshDataCache() error {
 	fetchTime := time.Since(preFetchTime)
 	logging.Info("Fetched %d assets in %v", len(newData), fetchTime)
 
-	// TODO: we might want to check if the data has changed before re-indexing
-	// and otherwise just return nil
+	// TODO: this whole procedure is pretty unsafe. we should not close the
+	// index before we are sure we have a new one to replace it with.
+	// But most likely we need to close the old index before we can open a new one at the same path.
+	// We should probably use a temporary path for the new index and then move it to the correct path.
 
-	// Re-index the new data
-	preIndexTime := time.Now()
-	newIndex, err := c.reIndexAssets(newData)
+	// fetch index data
+	preFetchTime = time.Now()
+	if c.index != nil {
+		c.index.Close()
+	}
+	indexPath, err := storage.GetFS(storage.IndexArchiveName, ".")
+	c.index, err = bleve.Open(indexPath)
 	if err != nil {
 		return err
 	}
 
-	if c.index != nil {
-		(*c.index).Close() // close the old index
+	fetchTime = time.Since(preFetchTime)
+	logging.Info("Fetched and opened index in %v", fetchTime)
+
+	// overwrite the old data with the new data
+	c.data = newData
+	c.dataMap = make(map[string]models.Asset, len(newData)) // we also save it as a map, so we can easily match searches from the index
+	for _, asset := range newData {
+		c.dataMap[asset.GameId] = asset
 	}
-
-	indexTime := time.Since(preIndexTime)
-	logging.Info("Indexed %d assets in %v", len(newData), indexTime)
-
-	c.index = newIndex
-	c.dataCache.data = newData
-	c.dataCache.updatedAt = time.Now()
+	c.dataUpdatedTime = newServerUpdateTime
 	return nil
 }
 
-func (c *Cache) QueryCache(queryString string, pageIndex int64) ([]models.Asset, error) {
-	c.cacheLock.RLock()
-	defer c.cacheLock.RUnlock()
+func buildFuzzyQuery(queryString string, fuzzyness int, prefixLen int) *query.DisjunctionQuery {
+	titleQuery := bleve.NewMatchQuery(queryString)
+	titleQuery.SetField("Title")
+	titleQuery.SetBoost(3)
+	titleQuery.SetPrefix(prefixLen)
+	titleQuery.SetFuzziness(fuzzyness)
+	descriptionQuery := bleve.NewMatchQuery(queryString)
+	descriptionQuery.SetField("Description")
+	descriptionQuery.SetBoost(2)
+	descriptionQuery.SetPrefix(prefixLen)
+	descriptionQuery.SetFuzziness(fuzzyness)
+	authorQuery := bleve.NewMatchQuery(queryString)
+	authorQuery.SetField("Author")
+	authorQuery.SetBoost(1)
+	authorQuery.SetPrefix(prefixLen)
+	authorQuery.SetFuzziness(fuzzyness)
 
-	// check for stale cache, refresh if needed
-	if c.IsCacheExpired() {
-		if err := c.RefreshDataCache(); err != nil {
-			return nil, err
-		}
-	}
+	// Combine queries with a disjunction (OR) query
+	query := bleve.NewDisjunctionQuery(titleQuery, descriptionQuery, authorQuery)
+	return query
+}
 
+func buildExactQuery(queryString string) *query.DisjunctionQuery {
 	titleQuery := bleve.NewMatchQuery(queryString)
 	titleQuery.SetField("Title")
 	titleQuery.SetBoost(3)
@@ -127,42 +138,70 @@ func (c *Cache) QueryCache(queryString string, pageIndex int64) ([]models.Asset,
 
 	// Combine queries with a disjunction (OR) query
 	query := bleve.NewDisjunctionQuery(titleQuery, descriptionQuery, authorQuery)
+	return query
+}
+
+func (c *Cache) QueryCache(queryString string, pageIndex int64) ([]models.Asset, error) {
+	// check for stale cache, refresh if needed
+	if c.IsCacheExpired() {
+		if err := c.RefreshDataCache(); err != nil {
+			return nil, err
+		}
+	}
+
+	c.cacheLock.RLock()
+	defer c.cacheLock.RUnlock()
+
+	veryFuzzyQuery := buildFuzzyQuery(queryString, 1, 2)
+	veryFuzzyQuery.SetBoost(2)
+	fuzzyQuery := buildFuzzyQuery(queryString, 1, 4)
+	fuzzyQuery.SetBoost(4)
+	exactQuery := buildExactQuery(queryString)
+	exactQuery.SetBoost(6)
+	query := bleve.NewDisjunctionQuery(veryFuzzyQuery, fuzzyQuery, exactQuery)
 
 	from := (int(pageIndex) - 1) * int(c.pageSize)
 	searchRequest := bleve.NewSearchRequestOptions(query, int(c.pageSize), from, false)
 
-	searchRequest.Highlight = bleve.NewHighlight()
-	searchRequest.Fields = []string{"Title", "Author", "Description", "Link", "ThumbUrl"}
+	//searchRequest.Highlight = bleve.NewHighlight()
+	searchRequest.Fields = []string{"Title", "Author", "Description"}
+	searchRequest.SortBy([]string{"-_score", "InvPopularity"})
 
-	searchResult, err := (*c.index).Search(searchRequest)
+	searchResult, err := c.index.Search(searchRequest)
 	if err != nil {
 		return nil, err
 	}
 
+	logging.Info("Got %d hits for query \"%s\"", searchResult.Total, queryString)
+
 	var matchedAssets []models.Asset
 	for _, hit := range searchResult.Hits {
-		matchedAssets = append(matchedAssets, models.Asset{
-			GameId:      hit.ID,
-			Title:       hit.Fields["Title"].(string),
-			Author:      hit.Fields["Author"].(string),
-			Description: hit.Fields["Description"].(string),
-			Link:        hit.Fields["Link"].(string),
-			ThumbUrl:    hit.Fields["ThumbUrl"].(string),
-		})
+		matchedAssets = append(matchedAssets, c.dataMap[hit.ID])
 	}
 
 	return matchedAssets, nil
 }
 
 func (c *Cache) Page(pageNum int64) ([]models.Asset, error) {
+
+	// TODO: maybe we dont even have to check for a stale cache, since most
+	// people won't be using the page function a lot
+
+	// check for stale cache, refresh if needed
+	if c.IsCacheExpired() {
+		if err := c.RefreshDataCache(); err != nil {
+			return nil, err
+		}
+	}
+
 	c.cacheLock.RLock()
 	defer c.cacheLock.RUnlock()
 	start := pageNum * c.pageSize
 	end := start + c.pageSize
-	if start > int64(len(c.dataCache.data)) {
+	if start > int64(len(c.data)) {
 		return nil, errors.New("Page out of range")
-	} else if end > int64(len(c.dataCache.data)) {
-		end = int64(len(c.dataCache.data))
+	} else if end > int64(len(c.data)) {
+		end = int64(len(c.data))
 	}
-	return c.dataCache.data[start:end], nil
+	return c.data[start:end], nil
 }

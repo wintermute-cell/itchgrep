@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
 
@@ -9,6 +9,24 @@ tasks:
   templ:
     cmds:
       - templ generate
+
+  fff:
+    cmds:
+      - task: prepare-fake-gcs-volume
+
+      - defer: docker stop fake-gcs-server && docker rm fake-gcs-server
+      - docker run --name fake-gcs-server -p 4443:4443 -v ${PWD}/local_data:/storage fsouza/fake-gcs-server -scheme http -data /storage
+
+
+  local-dataservice-temp-fix:
+    cmds:
+      - task: prepare-fake-gcs-volume
+
+      - defer: docker stop fake-gcs-server && docker rm fake-gcs-server
+      - docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/local_data:/storage fsouza/fake-gcs-server -scheme http -data /storage
+
+      - RUN_TEST=true RUN_LOCAL=true go run cmd/dataservice/main.go
+
 
   local-dataservice:
     cmds:
@@ -21,7 +39,7 @@ tasks:
 
       - docker build . -t itchgrep-dataservice -f "Dockerfile.dataservice"
       - defer: docker stop itchgrep-dataservice && docker rm itchgrep-dataservice
-      - docker run --name itchgrep-dataservice --network itchgrep-network -e RUN_LOCAL=true itchgrep-dataservice
+      - docker run --name itchgrep-dataservice --network itchgrep-network -p 8080:8080 -e RUN_LOCAL=true itchgrep-dataservice
 
   local-webserver:
     cmds:
@@ -117,6 +135,7 @@ tasks:
       RUN_TEST: true
       RUN_LOCAL: true
     cmds:
+      - echo "Testing Storage Package"
       - task: prepare-temp-fake-gcs-volume
       - defer: { task: clean-temp-fake-gcs-volume }
 
@@ -124,7 +143,7 @@ tasks:
       - cmd: docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/.tmp_local_data:/data fsouza/fake-gcs-server -scheme http -data /data -backend memory > /dev/null
         silent: true
 
-      - go test internal/storage/*
+      - go test -v internal/storage/*.go
 
 
   # --------------------------------
@@ -155,12 +174,12 @@ tasks:
     internal: true
     silent: true
     cmds:
-      - rm -rf -p "$(pwd)/.tmp_local_data/
+      - rm -rf "$(pwd)/.tmp_local_data/"
       - mkdir -p "$(pwd)/.tmp_local_data/itchgrep-data/"
       # we have to do the if check because the fake gcs container chowns the
       # files to root (does not appear to reacht to --user flag)
-      - if [ ! -f "$(pwd)/local_data/.tmp_local_data/.COME_ON_DOCKER" ];
-        then touch "$(pwd)/local_data/.tmp_local_data/.COME_ON_DOCKER";
+      - if [ ! -f "$(pwd)/.tmp_local_data/.COME_ON_DOCKER" ];
+        then touch "$(pwd)/.tmp_local_data/.COME_ON_DOCKER";
         fi
       # the `touch` is required because otherwise the directory won't be
       # created in the container, causing interaction with the bucket to 404
