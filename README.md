@@ -14,7 +14,7 @@ If you want to show some love for what I do, or want help pay the server, you ca
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)
 
 ## Architecture
-![An architectural diagram of itchgrep.com](.github/file.svg)
+![An architectural diagram of itchgrep.com](.github/itchgrep-architecture-diagram.svg)
 
 ## Running Locally
 
