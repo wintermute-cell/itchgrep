@@ -31,7 +31,7 @@ Your support fuels our passion and helps keep the servers running! If you apprec
 - **[Templ](https://github.com/a-h/templ)**
 - **[Bleve](https://github.com/blevesearch/bleve)**
 - **[HTMX](https://htmx.org/)**
-- **[Google Cloud](https://cloud.google.com/?hl=en)**:
+- **[Google Cloud](https://cloud.google.com/?hl=en)**
 - **[Docker](https://www.docker.com/)**
 
 These tools and technologies were chosen with care to provide a seamless and efficient experience for both developers and users of itchgrep.
