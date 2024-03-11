@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	cloud.google.com/go/storage v1.38.0
 	github.com/PuerkitoBio/goquery v1.9.0
-	github.com/a-h/templ v0.2.543
+	github.com/a-h/templ v0.2.598
 	github.com/blevesearch/bleve v1.0.14
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/mholt/archiver/v4 v4.0.0-alpha.8

@@ -13,6 +13,9 @@ we can learn from each other!
 If you want to show some love for what I do, or want help pay the server, you can...<br>
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)
 
+## Architecture
+![An architectural diagram of itchgrep.com](.github/file.svg)
+
 ## Running Locally
 
 If you want to [contribute](#contributing), or just run the project locally for your own use,

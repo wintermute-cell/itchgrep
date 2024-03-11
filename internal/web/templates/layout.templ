@@ -21,14 +21,10 @@ templ Layout(title string, content templ.Component) {
                 }
 			</script>
 			<style>
-            @media (max-width: 768px) {
-                .links {
-                    margin-top: 1rem;
-                    text-align: right;
-                }
-                #asset-list {
-                    grid-template-columns: repeat(2, 1fr);
-                }
+
+            .links {
+                margin: -0.4rem 0px 0px 0px;
+                text-align: left;
             }
 
             #asset-list {
@@ -93,6 +89,16 @@ templ Layout(title string, content templ.Component) {
                 /* long continuous strings without */
                 /* breakable chars like spaces or dashes */
                 word-break: break-word;
+            }
+
+            @media (max-width: 660px) {
+                .links {
+                    margin-top: 1rem;
+                    text-align: right;
+                }
+                #asset-list {
+                    grid-template-columns: repeat(2, 1fr);
+                }
             }
             </style>
 		</head>
