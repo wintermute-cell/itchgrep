@@ -1,19 +1,42 @@
 <!-- LTeX: language=en-US -->
-# itchgrep
-A tool that helps you find more and better assets for your games.
-It enables searching [itch.io](https://itch.io/) game assets with text queries
-instead of by tags.
 
-You can find this service hosted on [itchgrep.com](https://itchgrep.com/).
+<div align="center">
 
-I also have a [discord community](https://discord.gg/f8nyyK4ngZ) (since today hah),
-where I want to talk about all the things I build and how I build them. Maybe
-we can learn from each other!
+# itchgrep.com
 
-If you want to show some love for what I do, or want help pay the server, you can...<br>
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/winterv)
+### _Discover the Perfect Assets for Your Games_
 
-## Architecture
+🔍 search through itch.io assets using text queries; find what you need without relying solely on tags.
+
+🌐 Visit [itchgrep.com](https://itchgrep.com/) to start exploring.
+
+</div>
+
+<div align="left">
+
+### 🤝 Join Our Community
+We have a [🎮 Discord server](https://discord.gg/f8nyyK4ngZ)! It's a place for sharing, learning, and talking about game development and the projects we're passionate about. Feel free to join us!
+
+### 💖 Support itchgrep
+
+Your support fuels our passion and helps keep the servers running! If you appreciate what we do and want to contribute to our journey, consider:
+
+- 🍵 [**Buying me a coffee!** Your generosity is immensely appreciated, and every cup allows me to keep working on cool stuff.](https://www.buymeacoffee.com/winterv)
+
+</div>
+
+## 🛠 Techstack
+
+- **[Go](https://go.dev/)**
+- **[Templ](https://github.com/a-h/templ)**
+- **[Bleve](https://github.com/blevesearch/bleve)**
+- **[HTMX](https://htmx.org/)**
+- **[Google Cloud](https://cloud.google.com/?hl=en)**:
+- **[Docker](https://www.docker.com/)**
+
+These tools and technologies were chosen with care to provide a seamless and efficient experience for both developers and users of itchgrep.
+
+## 🗼 Architecture
 ![An architectural diagram of itchgrep.com](.github/itchgrep-architecture-diagram.png)
 
 ## Running Locally
@@ -106,14 +129,6 @@ Tests can be run by using the included [Taskfile](https://taskfile.dev/).
 
 - `task test`: Runs all of the test tasks below.
 - `task test-storage`: Tests the `storage` package, requires `Docker` to be running.
-
-## Techstack
-- [Go](https://go.dev/)
-- [Templ](https://github.com/a-h/templ)
-- [Bleve](https://github.com/blevesearch/bleve)
-- [HTMX](https://htmx.org/)
-- [Google Cloud](https://cloud.google.com/?hl=en)
-- [Docker](https://www.docker.com/)
 
 ## Contributing
 - before posting a pull request, please use [`go fmt`](https://go.dev/blog/gofmt) to format your code.
