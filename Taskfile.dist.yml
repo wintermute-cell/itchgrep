@@ -10,14 +10,6 @@ tasks:
     cmds:
       - templ generate
 
-  fff:
-    cmds:
-      - task: prepare-fake-gcs-volume
-
-      - defer: docker stop fake-gcs-server && docker rm fake-gcs-server
-      - docker run --name fake-gcs-server -p 4443:4443 -v ${PWD}/local_data:/storage fsouza/fake-gcs-server -scheme http -data /storage
-
-
   local-dataservice-temp-fix:
     cmds:
       - task: prepare-fake-gcs-volume
@@ -26,7 +18,6 @@ tasks:
       - docker run -d --name fake-gcs-server -p 4443:4443 -v ${PWD}/local_data:/storage fsouza/fake-gcs-server -scheme http -data /storage
 
       - RUN_TEST=true RUN_LOCAL=true go run cmd/dataservice/main.go
-
 
   local-dataservice:
     cmds:

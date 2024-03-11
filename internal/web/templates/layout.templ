@@ -21,6 +21,16 @@ templ Layout(title string, content templ.Component) {
                 }
 			</script>
 			<style>
+            @media (max-width: 768px) {
+                .links {
+                    margin-top: 1rem;
+                    text-align: right;
+                }
+                #asset-list {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
             #asset-list {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr); /* 3 items per row */
