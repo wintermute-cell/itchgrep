@@ -14,9 +14,6 @@
 
 <div align="left">
 
-### 🤝 Join Our Community
-We have a [🎮 Discord server](https://discord.gg/f8nyyK4ngZ)! It's a place for sharing, learning, and talking about game development and the projects we're passionate about. Feel free to join us!
-
 ### 💖 Support itchgrep
 
 Your support fuels our passion and helps keep the servers running! If you appreciate what we do and want to contribute to our journey, consider:
